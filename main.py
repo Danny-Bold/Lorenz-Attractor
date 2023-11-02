@@ -1,0 +1,117 @@
+import pygame
+
+
+SIZE = (1000, 1000)
+
+XRANGE = (-30, 30)
+YRANGE = (-1, 59)
+
+SIGMA = 10
+RHO = 28
+BETA = 8 / 3
+
+DT = 1 / 500
+
+LENGTHINFRAMES = 5000
+
+
+class Particle:
+    def __init__(self, pos=(0, 0, 0), col=(255, 255, 255)):
+        self.pos = list(pos)
+        self.col = col
+        self.lastPos = pos
+
+    def update(self):
+        """
+
+        All content will be generated at 60fps.
+
+        """
+        self.lastPos = [self.pos[0], self.pos[1], self.pos[2]]
+
+        vel = (SIGMA * (self.pos[1] - self.pos[0]),
+               self.pos[0] * (RHO - self.pos[2]) - self.pos[1],
+               self.pos[0] * self.pos[1] - BETA * self.pos[2])
+
+        self.pos[0] += vel[0] * DT
+        self.pos[1] += vel[1] * DT
+        self.pos[2] += vel[2] * DT
+
+    def draw(self, screen, line=False):
+        if not line:
+            proportionAcrossX = (self.pos[0] - XRANGE[0]) / (XRANGE[1] - XRANGE[0])
+            proportionAcrossY = 1 - (self.pos[2] - YRANGE[0]) / (YRANGE[1] - YRANGE[0])  # (0, 2) -> xz plane
+
+            xPos = SIZE[0] * proportionAcrossX
+            yPos = SIZE[1] * proportionAcrossY
+
+            pygame.draw.circle(screen, self.col, (xPos, yPos), 1)
+
+        else:
+            proportionAcrossX = (self.pos[0] - XRANGE[0]) / (XRANGE[1] - XRANGE[0])
+            proportionAcrossY = 1 - (self.pos[2] - YRANGE[0]) / (YRANGE[1] - YRANGE[0])  # (0, 2) -> xz plane
+
+            xPosCurrent = SIZE[0] * proportionAcrossX
+            yPosCurrent = SIZE[1] * proportionAcrossY
+
+            proportionAcrossX = (self.lastPos[0] - XRANGE[0]) / (XRANGE[1] - XRANGE[0])
+            proportionAcrossY = 1 - (self.lastPos[2] - YRANGE[0]) / (YRANGE[1] - YRANGE[0])  # (0, 2) -> xz plane
+
+            xPosLast = SIZE[0] * proportionAcrossX
+            yPosLast = SIZE[1] * proportionAcrossY
+
+            pygame.draw.line(screen, self.col, (xPosLast, yPosLast), (xPosCurrent, yPosCurrent), width=2)
+
+
+def main():
+
+    pList = []
+
+    epsilon = 1  # To stop the (0, 0, 0) particle staying at the critical point
+
+    c = pygame.Color((0, 0, 0))
+
+    for x in range(101):
+        for y in range(101):
+            hue = (x + y) * 360 / 200
+            c.hsva = (hue, 100, 100, 0)
+            pList.append(
+                Particle(pos=(60 * x / 100 - 30, 60 * y / 100, epsilon), col=(c.r, c.g, c.b))
+            )
+
+    iteration = 0
+
+    while iteration < LENGTHINFRAMES:
+
+        canvas = pygame.surface.Surface(SIZE)
+
+        for p in pList:
+            p.draw(canvas, line=True)
+            p.update()
+
+        pygame.image.save(canvas, 'img/' + str(iteration) + '.png')
+
+        iteration += 1
+
+        print(iteration)
+
+
+if __name__ == '__main__':
+    main()
+
+
+"""
+
+LOOP FOR BIG VIDEO
+
+    for x in range(101):
+        for y in range(101):
+            hue = (x + y) * 360 / 200
+            c.hsva = (hue, 100, 100, 0)
+            pList.append(
+                Particle(pos=(60 * x / 100 - 30, 60 * y / 100, epsilon), col=(c.r, c.g, c.b))
+            )
+
+
+
+"""
